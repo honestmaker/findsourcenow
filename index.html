@@ -133,11 +133,25 @@
 
         // recipes değişkeninin yüklendiğinden emin olmak için bir kontrol fonksiyonu
         function waitForRecipes(callback) {
-            if (typeof recipes !== 'undefined') {
-                callback();
-            } else {
-                setTimeout(() => waitForRecipes(callback), 100);
+            const maxAttempts = 50; // Maksimum deneme sayısı (5 saniye)
+            let attempts = 0;
+
+            function checkRecipes() {
+                if (typeof recipes !== 'undefined') {
+                    console.log("recipes yüklendi:", recipes);
+                    callback();
+                } else {
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        setTimeout(checkRecipes, 100);
+                    } else {
+                        console.error("recipes yüklenemedi, max deneme sayısına ulaşıldı.");
+                        document.getElementById('results').innerHTML = '<p class="text-red-500">Tarif veritabanına erişilemedi. Lütfen sayfayı yenileyin.</p>';
+                    }
+                }
             }
+
+            checkRecipes();
         }
 
         // Tema değiştirme
@@ -155,6 +169,7 @@
         // Öneri listesi için malzemeler
         waitForRecipes(() => {
             const availableIngredients = [...new Set(recipes.flatMap(recipe => recipe.ingredients))];
+            console.log("Önerilen malzemeler:", availableIngredients);
 
             // Otomatik tamamlama
             document.getElementById('ingredientInput').addEventListener('input', (e) => {
