@@ -1,169 +1,212 @@
 <!DOCTYPE html>
 <html lang="tr">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yemek Tarifi Arama</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f7f7;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            padding: 0;
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
         }
-
-        .container {
-            width: 90%;
-            max-width: 600px;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        .dark {
+            background-color: #1f2937;
+            color: #f3f4f6;
         }
-
-        h1 {
-            text-align: center;
-            color: #333;
+        .recipe-card {
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            margin-bottom: 20px;
+        .recipe-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
         }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
         }
-
-        button:hover {
-            background-color: #218838;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
-
-        .results {
-            margin-top: 20px;
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #10b981;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
         }
-
-        .result-item {
-            background-color: #f1f1f1;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-
-        .result-item h3 {
-            margin: 0;
-            color: #333;
+        /* Öneri listesi için stil iyileştirmeleri */
+        #suggestions li {
+            color: #1f2937; /* Koyu gri/siyah tonu, daha okunabilir */
+            transition: background-color 0.2s;
         }
-
-        .result-item p {
-            margin: 5px 0;
-        }
-
-        .result-item a {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .result-item a:hover {
-            text-decoration: underline;
-        }
-
-        /* Nasıl yapılır butonu stili */
-        .how-to-button {
-            padding: 8px 16px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .how-to-button:hover {
-            background-color: #0056b3;
+        .dark #suggestions li {
+            color: #e5e7eb; /* Koyu temada açık gri, kontrast artırıldı */
         }
     </style>
 </head>
+<body class="bg-gray-100 dark:bg-gray-800 min-h-screen flex items-center justify-center p-4">
+    <div class="container max-w-2xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+        <!-- Başlık ve Tema Butonu -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Yemek Tarifi Arama</h1>
+            <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200" aria-label="Tema değiştir">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 4">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            </button>
+        </div>
 
-<body>
+        <!-- Arama Alanı -->
+        <div class="relative mb-6">
+            <input type="text" id="ingredientInput" class="w-full p-4 text-lg border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700" placeholder="Malzemelerinizi girin (örn: tavuk, domates, soğan)" aria-label="Malzemeleri girin" />
+            <!-- Öneri Listesi -->
+            <ul id="suggestions" class="absolute w-full bg-white dark:bg-gray-800 border rounded-lg mt-1 max-h-48 overflow-y-auto shadow-lg hidden z-10"></ul>
+        </div>
 
-    <div class="container">
-        <h1>Yemek Tarifi Arama</h1>
+        <!-- Arama Butonu -->
+        <button onclick="findRecipe()" class="w-full p-4 bg-emerald-500 text-white text-lg font-semibold rounded-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">Yemek Ara</button>
 
-        <!-- Kullanıcının malzemeleri gireceği alan -->
-        <input type="text" id="ingredientsInput" placeholder="Malzemelerinizi girin (örn: tavuk, domates, soğan)" />
+        <!-- Yüklenme Animasyonu -->
+        <div id="loading" class="hidden spinner"></div>
 
-        <button onclick="findRecipe()">Yemek Ara</button>
-
-        <!-- Yemek önerileri sonuçları -->
-        <div class="results" id="recipeResults"></div>
+        <!-- Sonuçlar -->
+        <div id="results" class="mt-8"></div>
     </div>
 
-    <!-- Recipes.js'yi dahil ediyoruz -->
-    <script src="script.js"></script>
+    <!-- Script Dosyaları -->
     <script src="recipes.js"></script>
-
     <script>
-        // Yemek tarifi arama fonksiyonu
-        function findRecipe() {
-            const ingredientsInput = document.getElementById("ingredientsInput").value.toLowerCase();
-            const ingredientsList = ingredientsInput.split(/\s*,\s*/).map(item => item.trim());  // Malzemeleri virgülle ayırıyoruz
-            const resultsDiv = document.getElementById("recipeResults");
+        // Tema değiştirme
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        });
 
-            // Sonuçları temizle
-            resultsDiv.innerHTML = "";
+        // Tema yükleme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark');
+        }
 
-            // Yemek tariflerini filtreliyoruz
-            const matchingRecipes = recipes.filter(recipe => {
-                // Verilen malzemelere göre eşleşme kontrolü
-                return ingredientsList.every(ingredient => recipe.ingredients.includes(ingredient));
-            });
+        // Öneri listesi için malzemeler
+        const availableIngredients = [...new Set(recipes.flatMap(recipe => recipe.ingredients))];
 
-            // Uygun yemekleri listeliyoruz
+        // Otomatik tamamlama
+        document.getElementById('ingredientInput').addEventListener('input', (e) => {
+            const input = e.target.value.toLowerCase();
+            const suggestions = document.getElementById('suggestions');
+            suggestions.innerHTML = '';
+            if (input) {
+                const filtered = availableIngredients.filter(ing => ing.includes(input));
+                if (filtered.length > 0) {
+                    suggestions.classList.remove('hidden');
+                    filtered.forEach(ing => {
+                        const li = document.createElement('li');
+                        li.className = 'p-2 hover:bg-emerald-100 dark:hover:bg-emerald-700 cursor-pointer';
+                        li.textContent = ing;
+                        li.onclick = () => {
+                            const current = e.target.value.split(',').map(item => item.trim());
+                            current[current.length - 1] = ing;
+                            e.target.value = current.join(', ') + ', ';
+                            suggestions.classList.add('hidden');
+                        };
+                        suggestions.appendChild(li);
+                    });
+                } else {
+                    suggestions.classList.add('hidden');
+                }
+            } else {
+                suggestions.classList.add('hidden');
+            }
+        });
+
+        // Tarif arama fonksiyonu
+        async function findRecipe() {
+            const input = document.getElementById('ingredientInput').value.toLowerCase().trim();
+            const resultsDiv = document.getElementById('results');
+            const loadingDiv = document.getElementById('loading');
+            const suggestions = document.getElementById('suggestions');
+
+            suggestions.classList.add('hidden');
+            resultsDiv.innerHTML = '';
+            loadingDiv.classList.remove('hidden');
+
+            // Simüle edilmiş gecikme (premium his için)
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            if (!input) {
+                resultsDiv.innerHTML = '<p class="text-red-500">Lütfen en az bir malzeme girin.</p>';
+                loadingDiv.classList.add('hidden');
+                return;
+            }
+
+            const ingredientsList = input.split(',').map(item => item.trim()).filter(item => item);
+            if (!recipes) {
+                resultsDiv.innerHTML = '<p class="text-red-500">Tarif veritabanı yüklenemedi.</p>';
+                loadingDiv.classList.add('hidden');
+                return;
+            }
+
+            const matchingRecipes = recipes.filter(recipe =>
+                recipe.ingredients.every(ingredient => ingredientsList.includes(ingredient))
+            );
+
             if (matchingRecipes.length > 0) {
-                matchingRecipes.forEach(recipe => {
-                    const recipeDiv = document.createElement("div");
-                    recipeDiv.classList.add("result-item");
+                matchingRecipes.forEach((recipe, index) => {
+                    const recipeDiv = document.createElement('div');
+                    recipeDiv.className = 'recipe-card bg-gray-50 dark:bg-gray-800 p-6 rounded-lg mb-4 fade-in';
+                    recipeDiv.style.animationDelay = `${index * 0.1}s`;
                     recipeDiv.innerHTML = `
-                        <h3>${recipe.name}</h3>
-                        <p>Malzemeler: ${recipe.ingredients.join(", ")}</p>
-                        <a href="${recipe.link}" target="_blank">Nasıl Yapılır?</a>
+                        <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">${recipe.name}</h3>
+                        <p class="text-gray-600 dark:text-gray-300">Malzemeler: ${recipe.ingredients.join(', ')}</p>
                     `;
 
-                    // Nasıl yapılır butonunu ekliyoruz
-                    const howToButton = document.createElement("button");
-                    howToButton.classList.add("how-to-button");
-                    howToButton.innerText = "Nasıl Yapılır?";
-                    howToButton.onclick = function() {
-                        window.location.href = recipe.link;
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'mt-4 flex space-x-2';
+                    
+                    const howToButton = document.createElement('button');
+                    howToButton.className = 'px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition';
+                    howToButton.textContent = 'Nasıl Yapılır?';
+                    howToButton.setAttribute('aria-label', `${recipe.name} tarifini görüntüle`);
+                    howToButton.onclick = () => window.location.href = recipe.link;
+
+                    const favoriteButton = document.createElement('button');
+                    favoriteButton.className = 'px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition';
+                    favoriteButton.textContent = 'Favorilere Ekle';
+                    favoriteButton.setAttribute('aria-label', `${recipe.name} tarifini favorilere ekle`);
+                    favoriteButton.onclick = () => {
+                        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+                        if (!favorites.includes(recipe.name)) {
+                            favorites.push(recipe.name);
+                            localStorage.setItem('favorites', JSON.stringify(favorites));
+                            favoriteButton.textContent = 'Favorilerden Çıkar';
+                        } else {
+                            localStorage.setItem('favorites', JSON.stringify(favorites.filter(fav => fav !== recipe.name)));
+                            favoriteButton.textContent = 'Favorilere Ekle';
+                        }
                     };
 
-                    recipeDiv.appendChild(howToButton);
+                    buttonContainer.appendChild(howToButton);
+                    buttonContainer.appendChild(favoriteButton);
+                    recipeDiv.appendChild(buttonContainer);
                     resultsDiv.appendChild(recipeDiv);
                 });
             } else {
-                resultsDiv.innerHTML = "<p>Üzgünüz, bu malzemelerle herhangi bir yemek bulunamadı.</p>";
+                resultsDiv.innerHTML = '<p class="text-gray-600 dark:text-gray-300">Üzgünüz, bu malzemelerle tarif bulunamadı.</p>';
             }
+
+            loadingDiv.classList.add('hidden');
         }
     </script>
-
 </body>
-
 </html>
