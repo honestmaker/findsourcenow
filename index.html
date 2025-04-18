@@ -1,311 +1,57 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
 
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yemek Tarifi Arama</title>
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- styles.css -->
+    <title>Lezzetli Tarifler Seni Bekliyor!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        .dark {
-            background-color: #1f2937;
-            color: #f3f4f6;
-        }
-        .recipe-card {
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .recipe-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-        }
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #10b981;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* Öneri listesi için stil iyileştirmeleri */
-        #suggestions li {
-            color: #1f2937; /* Koyu gri/siyah tonu, daha okunabilir */
-            transition: background-color 0.2s;
-        }
-        .dark #suggestions li {
-            color: #e5e7eb; /* Koyu temada açık gri, kontrast artırıldı */
-        }
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .dark { background-color: #1f2937; color: #f3f4f6; }
+        .recipe-card { background: #374151; padding: 20px; border-radius: 15px; margin-top: 20px; transition: transform 0.3s, box-shadow 0.3s; }
+        .recipe-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #10b981; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-800 min-h-screen flex items-center justify-center p-4">
     <div class="container max-w-2xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-        <!-- Başlık ve Tema Butonu -->
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Yemek Tarifi Arama</h1>
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Lezzetli Tarifler Seni Bekliyor!</h1>
             <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200" aria-label="Tema değiştir">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
             </button>
         </div>
-
-        <!-- Filtreli Arama Seçeneği -->
-        <div class="mb-4">
-            <label class="flex items-center">
-                <input type="checkbox" id="filterSearch" class="mr-2">
-                <span class="text-gray-800 dark:text-gray-100">Filtreli Arama</span>
-            </label>
-        </div>
-
-        <!-- Arama Alanı -->
         <div class="relative mb-6">
-            <input type="text" id="ingredientInput" class="w-full p-4 text-lg border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700" placeholder="Malzemelerinizi girin (örn: tavuk, domates, soğan)" aria-label="Malzemeleri girin" />
-            <!-- Öneri Listesi -->
-            <div id="suggestions" class="absolute w-full bg-white dark:bg-gray-800 border rounded-lg mt-1 max-h-48 overflow-y-auto shadow-lg hidden z-10">
-                <ul id="suggestionsList"></ul>
-                <button id="applyFilter" class="w-full p-2 bg-emerald-500 text-white rounded-b-lg hover:bg-emerald-600 hidden">Filtreyi Uygula</button>
-            </div>
+            <input type="text" id="ingredientInput" class="w-full p-4 text-lg border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700" placeholder="Malzemeleri yazın (örn: tavuk, domates)" aria-label="Malzemeleri girin" />
         </div>
-
-        <!-- Arama Butonu -->
-        <button onclick="findRecipe()" class="w-full p-4 bg-emerald-500 text-white text-lg font-semibold rounded-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">Yemek Ara</button>
-
-        <!-- Yüklenme Animasyonu -->
+        <button onclick="findRecipe()" class="w-full p-4 bg-emerald-500 text-white text-lg font-semibold rounded-lg hover:bg-emerald-600 transition">Yemek Ara</button>
         <div id="loading" class="hidden spinner"></div>
-
-        <!-- Sonuçlar -->
         <div id="results" class="mt-8"></div>
     </div>
 
-    <!-- Script Dosyaları -->
     <script src="recipes.js" defer onerror="handleScriptError()"></script>
     <script src="script.js" defer></script>
     <script>
-        // recipes.js yüklenemediğinde çağrılacak fonksiyon
         function handleScriptError() {
             document.getElementById('results').innerHTML = '<p class="text-red-500">Tarif veritabanı yüklenemedi. Lütfen dosyayı kontrol edin.</p>';
         }
 
-        // recipes değişkeninin yüklendiğinden emin olmak için bir kontrol fonksiyonu
-        function waitForRecipes(callback) {
-            const maxAttempts = 50; // Maksimum deneme sayısı (5 saniye)
-            let attempts = 0;
-
-            function checkRecipes() {
-                if (typeof recipes !== 'undefined') {
-                    console.log("recipes yüklendi:", recipes);
-                    callback();
-                } else {
-                    attempts++;
-                    if (attempts < maxAttempts) {
-                        setTimeout(checkRecipes, 100);
-                    } else {
-                        console.error("recipes yüklenemedi, max deneme sayısına ulaşıldı.");
-                        document.getElementById('results').innerHTML = '<p class="text-red-500">Tarif veritabanına erişilemedi. Lütfen sayfayı yenileyin.</p>';
-                    }
-                }
-            }
-
-            checkRecipes();
-        }
-
-        // Tema değiştirme
         const themeToggle = document.getElementById('themeToggle');
         themeToggle.addEventListener('click', () => {
             document.body.classList.toggle('dark');
             localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
         });
 
-        // Tema yükleme
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark');
         }
-
-        // Öneri listesi için malzemeler
-        waitForRecipes(() => {
-            const availableIngredients = [...new Set(recipes.flatMap(recipe => recipe.ingredients))];
-            console.log("Önerilen malzemeler:", availableIngredients);
-
-            const filterSearchCheckbox = document.getElementById('filterSearch');
-            const ingredientInput = document.getElementById('ingredientInput');
-            const suggestions = document.getElementById('suggestions');
-            const suggestionsList = document.getElementById('suggestionsList');
-            const applyFilterButton = document.getElementById('applyFilter');
-            let selectedIngredients = [];
-
-            // Filtreli arama checkbox'ının durumu değiştiğinde
-            filterSearchCheckbox.addEventListener('change', () => {
-                if (filterSearchCheckbox.checked) {
-                    // Filtreli arama aktifse, öneri listesinde checkbox'lar gösterilecek
-                    ingredientInput.placeholder = "Malzeme arayın (örn: tavuk)";
-                } else {
-                    // Filtreli arama kapalıysa, normal davranış
-                    ingredientInput.placeholder = "Malzemelerinizi girin (örn: tavuk, domates, soğan)";
-                    selectedIngredients = [];
-                    suggestions.classList.add('hidden');
-                    applyFilterButton.classList.add('hidden');
-                }
-            });
-
-            // Otomatik tamamlama
-            ingredientInput.addEventListener('input', (e) => {
-                const input = e.target.value.toLowerCase();
-                suggestionsList.innerHTML = '';
-                if (input) {
-                    const filtered = availableIngredients.filter(ing => ing.includes(input));
-                    if (filtered.length > 0) {
-                        suggestions.classList.remove('hidden');
-                        filtered.forEach(ing => {
-                            const li = document.createElement('li');
-                            li.className = 'p-2 hover:bg-emerald-100 dark:hover:bg-emerald-700 cursor-pointer flex items-center';
-
-                            if (filterSearchCheckbox.checked) {
-                                // Filtreli arama aktifse checkbox ekle
-                                const checkbox = document.createElement('input');
-                                checkbox.type = 'checkbox';
-                                checkbox.className = 'mr-2';
-                                checkbox.value = ing;
-                                checkbox.checked = selectedIngredients.includes(ing);
-                                checkbox.addEventListener('change', (e) => {
-                                    if (e.target.checked) {
-                                        selectedIngredients.push(ing);
-                                    } else {
-                                        selectedIngredients = selectedIngredients.filter(item => item !== ing);
-                                    }
-                                    console.log("Seçilen malzemeler:", selectedIngredients);
-                                    applyFilterButton.classList.remove('hidden');
-                                });
-                                li.appendChild(checkbox);
-                            } else {
-                                // Filtreli arama kapalıysa normal tıklama davranışı
-                                li.onclick = () => {
-                                    const current = e.target.value.split(',').map(item => item.trim());
-                                    current[current.length - 1] = ing;
-                                    e.target.value = current.join(', ') + ', ';
-                                    suggestions.classList.add('hidden');
-                                };
-                            }
-
-                            const span = document.createElement('span');
-                            span.textContent = ing;
-                            li.appendChild(span);
-                            suggestionsList.appendChild(li);
-                        });
-                    } else {
-                        suggestions.classList.add('hidden');
-                        applyFilterButton.classList.add('hidden');
-                    }
-                } else {
-                    suggestions.classList.add('hidden');
-                    applyFilterButton.classList.add('hidden');
-                }
-            });
-
-            // Filtreyi Uygula butonuna tıklama
-            applyFilterButton.addEventListener('click', () => {
-                if (selectedIngredients.length > 0) {
-                    ingredientInput.value = selectedIngredients.join(', ') + ', ';
-                    suggestions.classList.add('hidden');
-                    applyFilterButton.classList.add('hidden');
-                    findRecipe();
-                }
-            });
-        });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9326fe0ad9cb673a',t:'MTc0NTAwODk4NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
