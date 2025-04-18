@@ -1,4 +1,43 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
@@ -8,6 +47,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- styles.css -->
+    <link rel="stylesheet" href="styles.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -85,6 +126,7 @@
 
     <!-- Script Dosyaları -->
     <script src="recipes.js" defer onerror="handleScriptError()"></script>
+    <script src="script.js" defer></script>
     <script>
         // recipes.js yüklenemediğinde çağrılacak fonksiyon
         function handleScriptError() {
@@ -145,87 +187,6 @@
                 }
             });
         });
-
-        // Tarif arama fonksiyonu
-        async function findRecipe() {
-            const input = document.getElementById('ingredientInput').value.toLowerCase().trim();
-            const resultsDiv = document.getElementById('results');
-            const loadingDiv = document.getElementById('loading');
-            const suggestions = document.getElementById('suggestions');
-
-            suggestions.classList.add('hidden');
-            resultsDiv.innerHTML = '';
-            loadingDiv.classList.remove('hidden');
-
-            // Simüle edilmiş gecikme (premium his için)
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            if (!input) {
-                resultsDiv.innerHTML = '<p class="text-red-500">Lütfen en az bir malzeme girin.</p>';
-                loadingDiv.classList.add('hidden');
-                return;
-            }
-
-            // recipes değişkeninin yüklendiğinden emin ol
-            waitForRecipes(() => {
-                if (!recipes) {
-                    resultsDiv.innerHTML = '<p class="text-red-500">Tarif veritabanı yüklenemedi.</p>';
-                    loadingDiv.classList.add('hidden');
-                    return;
-                }
-
-                const ingredientsList = input.split(',').map(item => item.trim()).filter(item => item);
-                const matchingRecipes = recipes.filter(recipe =>
-                    recipe.ingredients.every(ingredient => ingredientsList.includes(ingredient))
-                );
-
-                if (matchingRecipes.length > 0) {
-                    matchingRecipes.forEach((recipe, index) => {
-                        const recipeDiv = document.createElement('div');
-                        recipeDiv.className = 'recipe-card bg-gray-50 dark:bg-gray-800 p-6 rounded-lg mb-4 fade-in';
-                        recipeDiv.style.animationDelay = `${index * 0.1}s`;
-                        recipeDiv.innerHTML = `
-                            <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">${recipe.name}</h3>
-                            <p class="text-gray-600 dark:text-gray-300">Malzemeler: ${recipe.ingredients.join(', ')}</p>
-                        `;
-
-                        const buttonContainer = document.createElement('div');
-                        buttonContainer.className = 'mt-4 flex space-x-2';
-                        
-                        const howToButton = document.createElement('button');
-                        howToButton.className = 'px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition';
-                        howToButton.textContent = 'Nasıl Yapılır?';
-                        howToButton.setAttribute('aria-label', `${recipe.name} tarifini görüntüle`);
-                        howToButton.onclick = () => window.location.href = recipe.link;
-
-                        const favoriteButton = document.createElement('button');
-                        favoriteButton.className = 'px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition';
-                        favoriteButton.textContent = 'Favorilere Ekle';
-                        favoriteButton.setAttribute('aria-label', `${recipe.name} tarifini favorilere ekle`);
-                        favoriteButton.onclick = () => {
-                            const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-                            if (!favorites.includes(recipe.name)) {
-                                favorites.push(recipe.name);
-                                localStorage.setItem('favorites', JSON.stringify(favorites));
-                                favoriteButton.textContent = 'Favorilerden Çıkar';
-                            } else {
-                                localStorage.setItem('favorites', JSON.stringify(favorites.filter(fav => fav !== recipe.name)));
-                                favoriteButton.textContent = 'Favorilere Ekle';
-                            }
-                        };
-
-                        buttonContainer.appendChild(howToButton);
-                        buttonContainer.appendChild(favoriteButton);
-                        recipeDiv.appendChild(buttonContainer);
-                        resultsDiv.appendChild(recipeDiv);
-                    });
-                } else {
-                    resultsDiv.innerHTML = '<p class="text-gray-600 dark:text-gray-300">Üzgünüz, bu malzemelerle tarif bulunamadı.</p>';
-                }
-
-                loadingDiv.classList.add('hidden');
-            });
-        }
     </script>
 </body>
 </html>

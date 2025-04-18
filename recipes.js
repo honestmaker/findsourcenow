@@ -26,7 +26,7 @@ const recipes = [
     },
     {
         name: "Fırında Tavuk",
-        ingredients: ["tavuk", "patates", "zeytinyağı", "baharatlar"],
+        ingredients: ["oblast", "patates", "zeytinyağı", "baharatlar"],
         link: "https://yemekyap.com/firindatavuk"
     },
     {
