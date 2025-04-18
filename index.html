@@ -6,19 +6,18 @@
   <title>Find Source Now</title>
   <style>
     body {
-      font-family: 'Arial', sans-serif;
-      background: #f5f5f5;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #89f7fe, #66a6ff);
       margin: 0;
       padding: 0;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
       align-items: center;
       justify-content: center;
+      height: 100vh;
     }
     h1 {
       color: #333;
-      margin-top: 20px;
     }
     .search-container {
       margin-top: 20px;
@@ -27,24 +26,21 @@
       align-items: center;
     }
     input[type="text"] {
-      padding: 12px;
-      width: 320px;
+      padding: 10px;
+      width: 300px;
       font-size: 16px;
       margin-bottom: 10px;
-      border-radius: 8px;
+      border-radius: 5px;
       border: 1px solid #ccc;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     button {
-      padding: 12px 24px;
+      padding: 10px 20px;
       font-size: 16px;
       background-color: #4CAF50;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 5px;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      transition: background-color 0.3s ease;
     }
     button:hover {
       background-color: #45a049;
@@ -54,12 +50,10 @@
       width: 80%;
       max-width: 600px;
     }
-    footer {
-      margin-top: auto;
-      padding: 15px;
-      text-align: center;
+    .footer {
+      margin-top: 40px;
       font-size: 14px;
-      color: #777;
+      color: #555;
     }
   </style>
 </head>
@@ -74,9 +68,9 @@
 
   <div id="results"></div>
 
-  <footer>
+  <div class="footer">
     Made with ❤️ by Ari
-  </footer>
+  </div>
 
   <script>
     function searchSource() {
