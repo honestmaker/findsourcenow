@@ -5,12 +5,12 @@ function findRecipe() {
     const resultsDiv = document.getElementById("results");
 
     if (ingredientsList.length === 0) {
-        resultsDiv.innerHTML = '<p class="text-red-500 animate-pulse">Lütfen malzeme giriniz! 🍽️</p>';
+        resultsDiv.innerHTML = '<p class="error-text animate-pulse">Lütfen malzeme giriniz! 🍽️</p>';
         return;
     }
 
     if (typeof recipes === 'undefined') {
-        resultsDiv.innerHTML = '<p class="text-red-500">Tarif veritabanına erişilemedi. Lütfen sayfayı yenileyin.</p>';
+        resultsDiv.innerHTML = '<p class="error-text">Tarif veritabanına erişilemedi. Lütfen sayfayı yenileyin.</p>';
         return;
     }
 
@@ -24,11 +24,12 @@ function findRecipe() {
         );
 
         if (exactMatches.length > 0) {
-            exactMatches.forEach((recipe, index) => {
+            exactMatches.forEach(recipe => {
                 const recipeDiv = document.createElement('div');
                 recipeDiv.className = 'recipe-card fade-in';
                 recipeDiv.innerHTML = `<h3 class="text-xl font-semibold mb-2">${recipe.name}</h3>
-                                       <p class="text-gray-300">Malzemeler: ${recipe.ingredients.join(', ')}</p>`;
+                                       <p class="text-gray-600 mt-2">Malzemeler: ${recipe.ingredients.join(', ')}</p>
+                                       <a href="${recipe.link}" target="_blank" class="link-button mt-4 inline-block">Tarife Git</a>`;
                 resultsDiv.appendChild(recipeDiv);
             });
         } else {
@@ -47,8 +48,9 @@ function findRecipe() {
                 const recipeDiv = document.createElement('div');
                 recipeDiv.className = 'recipe-card fade-in';
                 recipeDiv.innerHTML = `<h3 class="text-xl font-semibold mb-2">${bestMatch.name}</h3>
-                                       <p class="text-gray-300">Malzemeler: ${bestMatch.ingredients.join(', ')}</p>
-                                       <p class="italic text-gray-400 mt-2">Bu tarif, en çok eşleşen malzemelere sahip! 🍽️</p>`;
+                                       <p class="text-gray-600 mt-2">Malzemeler: ${bestMatch.ingredients.join(', ')}</p>
+                                       <p class="italic text-gray-500 mt-2">Bu tarif, en çok eşleşen malzemelere sahip! 🍽️</p>
+                                       <a href="${bestMatch.link}" target="_blank" class="link-button mt-4 inline-block">Tarife Git</a>`;
                 resultsDiv.appendChild(recipeDiv);
             } else {
                 resultsDiv.innerHTML = '<p class="text-gray-400">Üzgünüz, bu malzemelerle tarif bulunamadı.</p>';
