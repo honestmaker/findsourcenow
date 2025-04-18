@@ -17,16 +17,20 @@ const recipes = [
 ];
 
 function findRecipe() {
+    // Kullanıcının malzeme girdisi alınıyor ve küçük harfe dönüştürülüyor
     const ingredientsInput = document.getElementById("ingredientInput").value.toLowerCase();
     const ingredientsList = ingredientsInput.split(",").map(item => item.trim());
     const resultsDiv = document.getElementById("results");
 
+    // Sonuçları temizle
     resultsDiv.innerHTML = "";
 
+    // Yemek tarifi veritabanı üzerinden arama yapılır
     const matchingRecipes = recipes.filter(recipe => {
         return recipe.ingredients.every(ingredient => ingredientsList.includes(ingredient));
     });
 
+    // Eğer uygun yemekler varsa, sonuçları listele
     if (matchingRecipes.length > 0) {
         matchingRecipes.forEach(recipe => {
             const recipeDiv = document.createElement("div");
@@ -37,6 +41,7 @@ function findRecipe() {
                 <a href="${recipe.link}" target="_blank">Nasıl Yapılır?</a>
             `;
 
+            // Nasıl yapılır butonunu ekle
             const howToButton = document.createElement("button");
             howToButton.classList.add("how-to-button");
             howToButton.innerText = "Nasıl Yapılır?";
@@ -48,6 +53,7 @@ function findRecipe() {
             resultsDiv.appendChild(recipeDiv);
         });
     } else {
+        // Eğer eşleşen yemek yoksa, bilgilendirme mesajı göster
         resultsDiv.innerHTML = "<p>Üzgünüz, bu malzemelerle herhangi bir yemek bulunamadı.</p>";
     }
 }
