@@ -252,7 +252,7 @@ const recipes = [
     {
         name: "Kadayıf",
         ingredients: ["tel kadayıf", "ceviz", "şerbet", "tereyağı"],
-        link: "https://yemekyap.com/kadayif"
+        link: "https://saksuka"
     },
     {
         name: "Fırında Patates",
