@@ -1,7 +1,7 @@
 function findRecipe() {
     // Kullanıcının malzeme girdisi alınıyor ve küçük harfe dönüştürülüyor
     const ingredientsInput = document.getElementById("ingredientInput").value.toLowerCase();
-    const ingredientsList = ingredientsInput.split(",").map(item => item.trim());
+    const ingredientsList = ingredientsInput.split(",").map(item => item.trim()).filter(item => item !== '');
     const resultsDiv = document.getElementById("results");
 
     // recipes değişkeninin tanımlı olup olmadığını kontrol et

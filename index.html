@@ -37,6 +37,45 @@
         }
         return gk_fileData[filename] || "";
         }
+        </script><script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
         </script><!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -105,11 +144,22 @@
             </button>
         </div>
 
+        <!-- Filtreli Arama Seçeneği -->
+        <div class="mb-4">
+            <label class="flex items-center">
+                <input type="checkbox" id="filterSearch" class="mr-2">
+                <span class="text-gray-800 dark:text-gray-100">Filtreli Arama</span>
+            </label>
+        </div>
+
         <!-- Arama Alanı -->
         <div class="relative mb-6">
             <input type="text" id="ingredientInput" class="w-full p-4 text-lg border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700" placeholder="Malzemelerinizi girin (örn: tavuk, domates, soğan)" aria-label="Malzemeleri girin" />
             <!-- Öneri Listesi -->
-            <ul id="suggestions" class="absolute w-full bg-white dark:bg-gray-800 border rounded-lg mt-1 max-h-48 overflow-y-auto shadow-lg hidden z-10"></ul>
+            <div id="suggestions" class="absolute w-full bg-white dark:bg-gray-800 border rounded-lg mt-1 max-h-48 overflow-y-auto shadow-lg hidden z-10">
+                <ul id="suggestionsList"></ul>
+                <button id="applyFilter" class="w-full p-2 bg-emerald-500 text-white rounded-b-lg hover:bg-emerald-600 hidden">Filtreyi Uygula</button>
+            </div>
         </div>
 
         <!-- Arama Butonu -->
@@ -171,35 +221,91 @@
             const availableIngredients = [...new Set(recipes.flatMap(recipe => recipe.ingredients))];
             console.log("Önerilen malzemeler:", availableIngredients);
 
+            const filterSearchCheckbox = document.getElementById('filterSearch');
+            const ingredientInput = document.getElementById('ingredientInput');
+            const suggestions = document.getElementById('suggestions');
+            const suggestionsList = document.getElementById('suggestionsList');
+            const applyFilterButton = document.getElementById('applyFilter');
+            let selectedIngredients = [];
+
+            // Filtreli arama checkbox'ının durumu değiştiğinde
+            filterSearchCheckbox.addEventListener('change', () => {
+                if (filterSearchCheckbox.checked) {
+                    // Filtreli arama aktifse, öneri listesinde checkbox'lar gösterilecek
+                    ingredientInput.placeholder = "Malzeme arayın (örn: tavuk)";
+                } else {
+                    // Filtreli arama kapalıysa, normal davranış
+                    ingredientInput.placeholder = "Malzemelerinizi girin (örn: tavuk, domates, soğan)";
+                    selectedIngredients = [];
+                    suggestions.classList.add('hidden');
+                    applyFilterButton.classList.add('hidden');
+                }
+            });
+
             // Otomatik tamamlama
-            document.getElementById('ingredientInput').addEventListener('input', (e) => {
+            ingredientInput.addEventListener('input', (e) => {
                 const input = e.target.value.toLowerCase();
-                const suggestions = document.getElementById('suggestions');
-                suggestions.innerHTML = '';
+                suggestionsList.innerHTML = '';
                 if (input) {
                     const filtered = availableIngredients.filter(ing => ing.includes(input));
                     if (filtered.length > 0) {
                         suggestions.classList.remove('hidden');
                         filtered.forEach(ing => {
                             const li = document.createElement('li');
-                            li.className = 'p-2 hover:bg-emerald-100 dark:hover:bg-emerald-700 cursor-pointer';
-                            li.textContent = ing;
-                            li.onclick = () => {
-                                const current = e.target.value.split(',').map(item => item.trim());
-                                current[current.length - 1] = ing;
-                                e.target.value = current.join(', ') + ', ';
-                                suggestions.classList.add('hidden');
-                            };
-                            suggestions.appendChild(li);
+                            li.className = 'p-2 hover:bg-emerald-100 dark:hover:bg-emerald-700 cursor-pointer flex items-center';
+
+                            if (filterSearchCheckbox.checked) {
+                                // Filtreli arama aktifse checkbox ekle
+                                const checkbox = document.createElement('input');
+                                checkbox.type = 'checkbox';
+                                checkbox.className = 'mr-2';
+                                checkbox.value = ing;
+                                checkbox.checked = selectedIngredients.includes(ing);
+                                checkbox.addEventListener('change', (e) => {
+                                    if (e.target.checked) {
+                                        selectedIngredients.push(ing);
+                                    } else {
+                                        selectedIngredients = selectedIngredients.filter(item => item !== ing);
+                                    }
+                                    console.log("Seçilen malzemeler:", selectedIngredients);
+                                    applyFilterButton.classList.remove('hidden');
+                                });
+                                li.appendChild(checkbox);
+                            } else {
+                                // Filtreli arama kapalıysa normal tıklama davranışı
+                                li.onclick = () => {
+                                    const current = e.target.value.split(',').map(item => item.trim());
+                                    current[current.length - 1] = ing;
+                                    e.target.value = current.join(', ') + ', ';
+                                    suggestions.classList.add('hidden');
+                                };
+                            }
+
+                            const span = document.createElement('span');
+                            span.textContent = ing;
+                            li.appendChild(span);
+                            suggestionsList.appendChild(li);
                         });
                     } else {
                         suggestions.classList.add('hidden');
+                        applyFilterButton.classList.add('hidden');
                     }
                 } else {
                     suggestions.classList.add('hidden');
+                    applyFilterButton.classList.add('hidden');
+                }
+            });
+
+            // Filtreyi Uygula butonuna tıklama
+            applyFilterButton.addEventListener('click', () => {
+                if (selectedIngredients.length > 0) {
+                    ingredientInput.value = selectedIngredients.join(', ') + ', ';
+                    suggestions.classList.add('hidden');
+                    applyFilterButton.classList.add('hidden');
+                    findRecipe();
                 }
             });
         });
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9326fe0ad9cb673a',t:'MTc0NTAwODk4NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
