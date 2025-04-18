@@ -1,4 +1,3 @@
-<script src="recipes.js"></script>
 const recipes = [
     {
         name: "Tavuklu Sote",
