@@ -50,7 +50,6 @@
             color: white;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
         }
 
         button:hover {
@@ -143,10 +142,10 @@
             const ingredientsList = ingredientsInput.split(",").map(item => item.trim());
             const resultsDiv = document.getElementById("recipeResults");
 
-            // Arama yapılacak yemeklerin sonuçlarını sıfırlıyoruz
+            // Sonuçları temizle
             resultsDiv.innerHTML = "";
 
-            // Veritabanındaki tarifleri kontrol ediyoruz
+            // Yemek tariflerini filtreliyoruz
             const matchingRecipes = recipes.filter(recipe => {
                 return recipe.ingredients.every(ingredient => ingredientsList.includes(ingredient));
             });
@@ -162,12 +161,12 @@
                         <a href="${recipe.link}" target="_blank">Nasıl Yapılır?</a>
                     `;
 
-                    // Nasıl yapılır butonu ekliyoruz
+                    // Nasıl yapılır butonunu ekliyoruz
                     const howToButton = document.createElement("button");
                     howToButton.classList.add("how-to-button");
                     howToButton.innerText = "Nasıl Yapılır?";
                     howToButton.onclick = function() {
-                        window.location.href = recipe.link; // Tarifin detay sayfasına yönlendiriyor
+                        window.location.href = recipe.link;
                     };
 
                     recipeDiv.appendChild(howToButton);
