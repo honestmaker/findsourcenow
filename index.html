@@ -108,7 +108,7 @@
         <h1>Yemek Tarifi Arama</h1>
 
         <!-- Kullanıcının malzemeleri gireceği alan -->
-        <input type="text" id="ingredientsInput" placeholder="Malzemelerinizi girin (örn: domates, tavuk, soğan)" />
+        <input type="text" id="ingredientsInput" placeholder="Malzemelerinizi girin (örn: tavuk, domates, soğan)" />
 
         <button onclick="findRecipe()">Yemek Ara</button>
 
@@ -116,30 +116,14 @@
         <div class="results" id="recipeResults"></div>
     </div>
 
-    <script>
-        // Örnek yemek tarif veritabanı
-        const recipes = [
-            {
-                name: "Tavuklu Sote",
-                ingredients: ["tavuk", "soğan", "biber", "sarımsak"],
-                link: "https://yemekyap.com/tavuksote"
-            },
-            {
-                name: "Domatesli Tavuk",
-                ingredients: ["tavuk", "domates", "soğan"],
-                link: "https://yemekyap.com/domateslitavuk"
-            },
-            {
-                name: "Sebzeli Çorba",
-                ingredients: ["domates", "soğan", "biber", "havuç"],
-                link: "https://yemekyap.com/sebzelicorba"
-            }
-        ];
+    <!-- Recipes.js'yi dahil ediyoruz -->
+    <script src="recipes.js"></script>
 
+    <script>
         // Yemek tarifi arama fonksiyonu
         function findRecipe() {
             const ingredientsInput = document.getElementById("ingredientsInput").value.toLowerCase();
-            const ingredientsList = ingredientsInput.split(",").map(item => item.trim());
+            const ingredientsList = ingredientsInput.split(/\s*,\s*/).map(item => item.trim());  // Malzemeleri virgülle ayırıyoruz
             const resultsDiv = document.getElementById("recipeResults");
 
             // Sonuçları temizle
@@ -147,7 +131,8 @@
 
             // Yemek tariflerini filtreliyoruz
             const matchingRecipes = recipes.filter(recipe => {
-                return recipe.ingredients.every(ingredient => ingredientsList.includes(ingredient));
+                // Verilen malzemelere göre eşleşme kontrolü
+                return ingredientsList.every(ingredient => recipe.ingredients.includes(ingredient));
             });
 
             // Uygun yemekleri listeliyoruz
