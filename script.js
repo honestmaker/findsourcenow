@@ -1,42 +1,50 @@
 const recipes = [
     {
-        "name": "Tavuklu Sote",
-        "ingredients": ["tavuk", "soğan", "biber", "sarımsak"],
-        "recipeLink": "https://yemekyap.com/tavuksote"
+        name: "Tavuklu Sote",
+        ingredients: ["tavuk", "soğan", "biber", "sarımsak"],
+        link: "https://yemekyap.com/tavuksote"
     },
     {
-        "name": "Domatesli Tavuk",
-        "ingredients": ["tavuk", "domates", "soğan", "sarımsak"],
-        "recipeLink": "https://yemekyap.com/domateslitavuk"
+        name: "Domatesli Tavuk",
+        ingredients: ["tavuk", "domates", "soğan"],
+        link: "https://yemekyap.com/domateslitavuk"
     },
     {
-        "name": "Sebzeli Çorba",
-        "ingredients": ["domates", "soğan", "biber", "havuç"],
-        "recipeLink": "https://yemekyap.com/sebzelicorba"
+        name: "Sebzeli Çorba",
+        ingredients: ["domates", "soğan", "biber", "havuç"],
+        link: "https://yemekyap.com/sebzelicorba"
     }
 ];
 
-function findRecipes() {
-    const userInput = document.getElementById('ingredientInput').value.trim().toLowerCase();
-    const userIngredients = userInput.split(',').map(ingredient => ingredient.trim());
+function findRecipe() {
+    const ingredientsInput = document.getElementById("ingredientInput").value.toLowerCase();
+    const ingredientsList = ingredientsInput.split(",").map(item => item.trim());
+    const resultsDiv = document.getElementById("results");
 
-    const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = '';  // Önceki sonuçları temizle
+    resultsDiv.innerHTML = "";
 
-    // Eşleşme fonksiyonu
     const matchingRecipes = recipes.filter(recipe => {
-        const ingredientMatchCount = recipe.ingredients.filter(ingredient => userIngredients.includes(ingredient)).length;
-        return ingredientMatchCount > 0;  // En az 1 malzeme eşleşmeli
+        return recipe.ingredients.every(ingredient => ingredientsList.includes(ingredient));
     });
 
     if (matchingRecipes.length > 0) {
         matchingRecipes.forEach(recipe => {
             const recipeDiv = document.createElement("div");
+            recipeDiv.classList.add("result-item");
             recipeDiv.innerHTML = `
                 <h3>${recipe.name}</h3>
                 <p>Malzemeler: ${recipe.ingredients.join(", ")}</p>
-                <a href="${recipe.recipeLink}" target="_blank">Nasıl Yapılır?</a>
+                <a href="${recipe.link}" target="_blank">Nasıl Yapılır?</a>
             `;
+
+            const howToButton = document.createElement("button");
+            howToButton.classList.add("how-to-button");
+            howToButton.innerText = "Nasıl Yapılır?";
+            howToButton.onclick = function() {
+                window.location.href = recipe.link;
+            };
+
+            recipeDiv.appendChild(howToButton);
             resultsDiv.appendChild(recipeDiv);
         });
     } else {
