@@ -23,9 +23,10 @@ function findRecipes() {
     const resultsDiv = document.getElementById('results');
     resultsDiv.innerHTML = '';  // Önceki sonuçları temizle
 
+    // Eşleşme fonksiyonu
     const matchingRecipes = recipes.filter(recipe => {
-        const matches = recipe.ingredients.filter(ingredient => userIngredients.includes(ingredient));
-        return matches.length > 0;  // En az 1 malzeme eşleşmesi olmalı
+        const ingredientMatchCount = recipe.ingredients.filter(ingredient => userIngredients.includes(ingredient)).length;
+        return ingredientMatchCount > 0;  // En az 1 malzeme eşleşmeli
     });
 
     if (matchingRecipes.length > 0) {
