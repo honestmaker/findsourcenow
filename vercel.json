@@ -1,0 +1,8 @@
+icine tam şunu yapıştır:
+
+```json
+{
+"rewrites": [
+ { "source": "/(.*)", "destination": "/index.html" }
+]
+}
