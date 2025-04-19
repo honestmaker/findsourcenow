@@ -1,0 +1,177 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yemek Tarifi - Nasıl Yapılır?</title>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- styles.css -->
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+        .recipe-details {
+            background-color: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+        }
+        .dark .recipe-details {
+            background-color: #1f2937;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-800 min-h-screen flex items-center justify-center p-4">
+    <div class="container max-w-2xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 fade-in">
+        <!-- Başlık ve Tema Butonu -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Nasıl Yapılır?</h1>
+            <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200" aria-label="Tema değiştir">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Tarif Detayları -->
+        <div id="recipeDetails" class="recipe-details"></div>
+
+        <!-- Geri Dön Butonu -->
+        <button onclick="window.location.href='index.html'" class="w-full p-4 bg-emerald-500 text-white text-lg font-semibold rounded-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition mt-4">
+            Ana Sayfaya Geri Dön
+        </button>
+    </div>
+
+    <!-- Script Dosyaları -->
+    <script src="recipes.js" defer onerror="handleScriptError()"></script>
+    <script>
+        // recipes.js yüklenemediğinde çağrılacak fonksiyon
+        function handleScriptError() {
+            document.getElementById('recipeDetails').innerHTML = '<p class="text-red-500">Tarif veritabanı yüklenemedi. Lütfen dosyayı kontrol edin.</p>';
+        }
+
+        // recipes değişkeninin yüklendiğinden emin olmak için bir kontrol fonksiyonu
+        function waitForRecipes(callback) {
+            if (typeof recipes !== 'undefined') {
+                callback();
+            } else {
+                setTimeout(() => waitForRecipes(callback), 100);
+            }
+        }
+
+        // Tema değiştirme
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        });
+
+        // Tema yükleme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark');
+        }
+
+        // URL'den yemeğin adını al
+        waitForRecipes(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const recipeName = urlParams.get('recipe');
+            const recipeDetailsDiv = document.getElementById('recipeDetails');
+
+            if (recipeName) {
+                // Tarif adını normalize ederek eşleştir
+                const normalizedRecipeName = normalizeTurkish(recipeName);
+                const recipe = recipes.find(r => normalizeTurkish(r.name) === normalizedRecipeName);
+
+                if (recipe) {
+                    recipeDetailsDiv.innerHTML = `
+                        <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">${recipe.name}</h2>
+                        <h3 class="text-lg font-medium text-gray-700 dark:text-gray-200 mb-2">Malzemeler:</h3>
+                        <p class="text-gray-600 dark:text-gray-300 mb-4">${recipe.ingredients.join(', ')}</p>
+                        <h3 class="text-lg font-medium text-gray-700 dark:text-gray-200 mb-2">Yapılış Adımları:</h3>
+                        <ol class="list-decimal list-inside text-gray-600 dark:text-gray-300">
+                            ${recipe.instructions.map(step => `<li>${step}</li>`).join('')}
+                        </ol>
+                    `;
+                } else {
+                    recipeDetailsDiv.innerHTML = '<p class="text-gray-600 dark:text-gray-300">Tarif bulunamadı.</p>';
+                }
+            } else {
+                recipeDetailsDiv.innerHTML = '<p class="text-gray-600 dark:text-gray-300">Lütfen bir tarif seçin.</p>';
+            }
+        });
+
+        // Türkçe harfleri normalize eden fonksiyon
+        function normalizeTurkish(text) {
+            const turkishMap = {
+                'ğ': 'g',
+                'ü': 'u',
+                'ş': 's',
+                'ı': 'i',
+                'ö': 'o',
+                'ç': 'c',
+                'Ğ': 'G',
+                'Ü': 'U',
+                'Ş': 'S',
+                'I': 'I',
+                'İ': 'I',
+                'Ö': 'O',
+                'Ç': 'C'
+            };
+            return text.toLowerCase().replace(/[ğüşıöçĞÜŞIİÖÇ]/g, char => turkishMap[char] || char);
+        }
+    </script>
+</body>
+</html>
